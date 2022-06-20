@@ -1,0 +1,74 @@
+
+
+
+######################################################################
+###################            GSEA              #####################
+######################################################################
+
+
+
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#BiocManager::install("limma")
+#BiocManager::install("org.Hs.eg.db")
+#BiocManager::install("DOSE")
+#BiocManager::install("clusterProfiler")
+#BiocManager::install("enrichplot")
+library(limma)
+library(org.Hs.eg.db)
+library(clusterProfiler)
+library(enrichplot)
+
+
+
+
+
+
+
+inputFile="case-control-all-DESeq2.gene.xls"                    #全部的DEseq2差异结果文件，含有FoldChange
+gmtFile="c2.cp.kegg.v7.4.symbols.gmt"                           #重要的配置文件
+
+
+
+
+
+
+
+
+rt=read.table(inputFile, header=T, sep="\t", check.names=F)
+logFC=as.vector(rt[,3])                                         #修改处
+names(logFC)=as.vector(rt[,1])                                  #修改处
+logFC=sort(logFC, decreasing=T)
+
+
+gmt=read.gmt(gmtFile)
+
+
+kk=GSEA(logFC, TERM2GENE=gmt, pvalueCutoff = 1)
+kkTab=as.data.frame(kk)
+kkTab=kkTab[kkTab$p.adjust<0.05,]
+write.table(kkTab,file="GSEA.result.txt",sep="\t",quote=F,row.names = F)
+
+
+termNum=5                                                       #修改处，数字表示显示最显著的多少个
+kkUp=kkTab[kkTab$NES>0,]
+	showTerm=row.names(kkUp)[1:termNum]
+	gseaplot=gseaplot2(kk, showTerm, base_size=8, title="Enriched in Treat")
+	pdf(file="GSEA.treat.pdf", width=7, height=5.5)
+	print(gseaplot)
+	dev.off()
+
+
+
+termNum=5                                                       #修改处，数字表示显示最显著的多少个
+kkDown=kkTab[kkTab$NES<0,]
+
+	showTerm=row.names(kkDown)[1:termNum]
+	gseaplot=gseaplot2(kk, showTerm, base_size=8, title="Enriched in Control")
+	pdf(file="GSEA.con.pdf", width=7, height=5.5)
+	print(gseaplot)
+	dev.off()
+
+
+
+
