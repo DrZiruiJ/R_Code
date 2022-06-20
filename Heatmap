@@ -1,0 +1,190 @@
+
+
+
+######################################################################
+###################            Heatmap           #####################
+######################################################################
+
+
+
+#install.packages("pheatmap")
+BiocManager::install("ComplexHeatmap")
+library(pheatmap)
+library(BiocManager)
+library(tidyverse)
+library(dplyr)
+library(DESeq2)
+library(DESeq2)
+library(xlsx)
+
+
+
+
+
+
+#整理出后面需要的expr_Sig，annotation_col和annotation_row
+data1<-read.table("./gene.txt",sep="\t",header=F)
+data3<-data1[data1$Sig!="Not",]
+data2<-as.data.frame(data3$id)
+data4<-read.table("./DESeq2-Express.gene.txt",sep="\t",header=T)
+colnames(data1)<-c("ID")
+data6<-read.table("./case-control-differ-pvalue-0.05-FC-2.gene.xls",sep="\t",header=T)
+expr_Sig <- inner_join( data1,data4,
+                     by = "ID")
+row.names(expr_Sig)<-expr_Sig$ID
+expr_Sig<-expr_Sig[,-1]                                      #整理出矩阵模式，即基因名为行名，样本名为列名
+
+
+
+
+
+
+
+######整理出annotation_col和annotation_row#######
+data5<-as.data.frame(t(expr_Sig[,-1]) )
+data5<-data5%>%mutate(Type="Ischemia")
+data5<-data5%>%select("Type")
+data5[6:10,1]<-c("Normal")
+#as.factor(data5$Type)
+annotation_col<-data5
+
+data8<-expr_Sig
+data3<-read.table("./siggene.txt",sep="\t",header=T)
+row.names(data8)<-expr_Sig[,1]
+annotation_row<-data8%>%select(GeneClass)
+colnames(annotation_row)<-c("GeneClass")
+#as.factor(annotation_row$GeneClass)
+write.csv(annotation_row,"annotation_row.csv")
+write.csv(annotation_col,"datTraits.csv")
+
+data6<-read.table("./NRGexp.txt",sep="\t",header=T)
+data7<-data6[data6$A1!=0,]
+data8<-read.table("./NRGexp.txt",sep="\t",header=T)
+data9<-data8[data8$padj<=0.05,]
+summary(data8)
+data7<-data6%>%select("gene_id","up_down")
+colnames(data7)<-c("ID","GeneClass")
+expr_Sig <- inner_join( data7,data4,
+                        by = "ID")
+
+row.names(data4)<-data4$ID      ##注意要用基因名作为行名
+data4<-data4[,-1]            
+expr_Sig<-expr_Sig[,-11]
+
+row.names(expr_Sig)<-expr_Sig$ID
+as.data.frame(expr_Sig)
+
+data11<-data10%>%select("GeneClass")
+annotation_row<-data11
+
+expr_Sig<-data8[,3:12]
+
+
+
+
+
+
+
+
+
+#画图
+pheatmap(data4)
+
+#是否显示行的聚类，cluster_col同理
+pheatmap(data4, cluster_col=T)
+
+#切分热图
+pheatmap(expr_Sig, cluster_rows = F, gaps_row = c(10, 14), cluster_cols = T,
+         cutree_col = 4)
+
+#是否显示图例 
+pheatmap(expr_Sig, legend = FALSE)
+#legend_breaks设置图例的显示范围，间隔为1；legend_labels重写刻度的标签, 需与legend_breaks同时使用。
+pheatmap(expr_Sig,legend_breaks = -1:4)
+
+#kmeans是一种聚类算法，详见https://www.cnblogs.com/bourneli/p/3645049.html
+pheatmap(expr_Sig, kmeans_k = 3)
+
+#scale标准化
+#原始数据中，每个基因表达变化范围对应的数值大小不同，导致图片中色彩变化难以显示基因在不同样本中的变化趋势，
+ 可以对基因在每个样本中基因表达数据进行标准化，使其数值在一定范围内，从而实现热图的优化
+pheatmap(expr_Sig, scale = "row")
+#pheatmap(expr_Sig, scale = "column")
+#pheatmap(expr_Sig, scale = "none")
+
+#聚类线长度优化，可能不一样的算法有不一样的枝长
+#算法有'correlation', 'euclidean', 'maximum', 'manhattan', 'canberra', 'binary', 'minkowski'
+pheatmap(expr_Sig, clustering_distance_rows = "maximum")
+#或clustering_distance_cols
+
+#设置颜色后面，括号里的数字表示梯度，10就是将这三种颜色设置为10个梯度
+pheatmap(expr_Sig, color = colorRampPalette(c("navy", "white", "firebrick3"))(10))
+
+#显示色块的数值
+pheatmap(expr_Sig, display_numbers = TRUE)
+#此外还可添加如下参数
+#number_format = "%.3e"表示保留3位小数，且用科学计数法显示
+#number_format = "%.3f"表示保留3位小数，用小数显示
+pheatmap(expr_Sig, display_numbers = TRUE,number_format = "%.3e")
+
+#调整色块或文本大小
+pheatmap(expr_Sig, cellwidth = 5, cellheight = 1, main = "Heatmap", fontsize = 3)
+
+#对行列进行注释
+annotation_col <- read.csv(file='datTraits.csv',row.names = 1, 
+                          header = TRUE, sep=",", stringsAsFactors = FALSE)
+  
+annotation_col 
+#同理可设置annotation_row
+annotation_row <- read.csv(file='annotation_row.csv',row.names = 1, 
+                           header = TRUE, sep=",", stringsAsFactors = FALSE)
+#自定义注释色块的颜色
+ann_colors = list(
+Type = c(Ischemia = "#1B9E77", Normal = "#D95F02"),
+GeneClass = c(up = "#7570B3",down = "#E7298A")
+) 
+#注意ann_colors是列表
+pheatmap(expr_Sig, annotation_col = annotation_col,
+         annotation_row = annotation_row,annotation_colors = ann_colors)  
+
+#最终热图展示
+pheatmap(expr_Sig,scale = "row", #clustering_distance_rows = "maximum",则按基因类型划分;
+         color = colorRampPalette(c("navy", "white", "firebrick3"))(10),
+        #cellwidth = 18, cellheight = 18, fontsize = 9,
+        main = "", show_rownames = F,  #展不展示基因名称
+        #参数去掉边框线border=F, 
+         annotation_col = annotation_col,
+         annotation_row = annotation_row,
+         annotation_colors = ann_colors,
+         filename = "heatmapall.pdf")
+
+dev.off()
+
+
+
+
+
+
+
+
+#复杂注释 结合其他密度图、直方图
+library(ComplexHeatmap)
+library("GetoptLong")
+# Define some graphics to display the distribution of columns
+.hist = anno_histogram(expr_Sig, gp = gpar(fill = "lightblue"))
+.density = anno_density(expr_Sig, type = "line", gp = gpar(col = "blue"))
+ha_mix_top = HeatmapAnnotation(hist = .hist, density = .density)
+# Define some graphics to display the distribution of rows
+.violin = anno_density(expr_Sig, type = "violin", gp = gpar(fill = "lightblue"), which = "row")
+.boxplot = anno_boxplot(expr_Sig, which = "row")
+ha_mix_right = HeatmapAnnotation(violin = .violin, bxplt = .boxplot, which = "row", 
+                                 width = unit(3, "cm"))
+# Combine annotation with heatmap
+Heatmap(expr_Sig, name = "heatmap", column_names_gp = gpar(fontsize = 8), 
+        top_annotation = ha_mix_top) 
+        #+ ha_mix_right
+dev.off()
+#heatmap():用于绘制简单热图的函数
+#heatmap.2():绘制增强热图的函数
+#d3heatmap:用于绘制交互式热图的R包
+#ComplexHeatmap:用于绘制、注释和排列复杂热图的R&bioconductor包（非常适用于基因组数据分析）
