@@ -1,0 +1,46 @@
+
+
+######################################################################
+###################    Ensembl_ID转gene_symbol   #####################
+######################################################################
+
+
+
+
+library(BiocManager)
+library(tidyverse)
+library(dplyr)
+library(DESeq2)
+library(DESeq2)
+
+
+
+
+test1=read.table("./ENS-genetype-genename.txt",sep="\t",header=T)
+test2=read.table("./joined_counts.txt",sep="\t",header=T)
+merge <- inner_join(test1, test2,by = "ID") %>% dplyr::select(-1)
+write.table(merge,file="symbol.txt",sep="\t",quote=F,row.names=F) 
+
+
+
+datagene<- merge[merge$Gene.type=="protein_coding",]
+datalncrna<- merge[merge$Gene.type=="lncRNA",]
+datamirna<- merge[merge$Gene.type=="miRNA",]
+datagene<- datagene[,-1]
+
+
+
+# 以变量x去重，返回所有变量  
+avereps(datagene[,-1],ID=data1$id)                                 #重复序列取均值，前半部分为只保留矩阵，后半部分设id（基因名）列为被查找的重复列
+datagene<-datagene[!duplicated(data1$id),]                         #合并删除重复序列
+
+
+
+
+
+##用函数将Ensembl_ID转gene_symbol##
+library(clusterprofiler)
+library(org.Hs.eg.db)
+df<-bitr(rownames(DEG),fromType="SYMBOL",toType=c("ENTREZID"),orgDb=org.Hs.eg.db
+
+
