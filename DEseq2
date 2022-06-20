@@ -1,0 +1,147 @@
+
+
+######################################################################
+###################            DEseq2            #####################
+######################################################################
+
+##用SUBIO数据做DESeq2差异分析##
+BiocManager::install("DESeq2")
+install.packages("BiocManager")
+
+library(BiocManager)
+library(tidyverse)
+library(dplyr)
+library(DESeq2)
+library(DESeq2)
+library(limma)
+
+
+
+
+
+
+##数据清洗##
+data1<-read.table("./Protein1.txt",sep="\t",header=T)  #protein为用subio处理出的测序数据
+avereps(data1[,-1],ID=data1$id)           #重复序列取均值，前半部分为只保留矩阵，后半部分设id（基因名）列为被查找的重复列
+datagene<-data1[!duplicated(data1$id),]   #合并删除重复序列
+row.names(datagene)<-datagene[,1]
+datagene<-datagene[,-1]
+datagene[is.na(datagene)] <- 0  #na全赋值为0
+any(is.na(data1))
+datagene<-as.matrix(datagene)
+any(is.na(datagene))
+summary(datagene)
+datagene<-as.numeric(datagene)   ##
+datatest<-datagene[!rowMeans(datagene)==0,] #去除全为0的行
+datagene<-datatest
+
+
+
+
+
+
+
+##转化为DESeq2要求的数据格式##
+condition <-factor(c(rep("case",5),rep("control",5)),levels=c("case","control"))
+colData<-data.frame(row.names =c("A1","A2","A3","A4","A5", "C1","C2",  
+                                 "C3", "C4","C5") ,condition)
+dds<-DESeqDataSetFromMatrix(countData = datagene, colData = colData,
+                            design = ~condition)
+dds
+
+
+
+
+
+
+
+##数据过滤##
+# dds <- dds[ rowSums(counts(dds)) > 1 ,]
+dds<-DESeq(dds)
+sizeFactors(dds)                                                #出现小数点证明前面的操作成功
+res <- results(dds, contrast=c("condition","case","control"))   ########注意case组在前，control在后，输出结果
+
+
+
+rld <- rlogTransformation(dds)                                  #转化为rlog形式的标准化数据矩阵，得到DESeq2包normlization的表达矩阵！
+exprMatrix_rlog=assay(rld) 
+write.csv(exprMatrix_rlog,'exprMatrix.rlog.csv' )               #保存rlog数据到csv格式
+
+
+normalizedCounts1 <- t( t(counts(dds)) / sizeFactors(dds) )     # 生成TEP格式数据
+normalizedCounts2 <- counts(dds, normalized=T)                  # it's the same for the tpm value
+exprMatrix_rpm=as.data.frame(normalizedCounts1) 
+head(exprMatrix_rpm)
+write.csv(exprMatrix_rpm,'exprMatrix.rpm.csv' )                 #保存TEP数据到csv格式
+
+#as.data.frame(exprMatrix_rpm)
+#write.table(exprMatrix_rpm,"exprMatrix_rpm.xls",sep = "\t",col.names = TRUE,  
+            row.names = T,quote = F,na="")                      #quote = F 意思是双引号不输出，另一种保存方法
+            
+            
+            
+
+
+
+
+
+#下面图看哪些差异基因（差异有意义）
+png("qc_dispersions.png", 1000, 1000, pointsize=20)
+plotDispEsts(dds, main="Dispersion plot")
+dev.off()
+
+
+
+
+
+
+##下方代码为绘制DEseq_RAWvsNORM对比图##
+## 下面的代码如果你不感兴趣不需要运行，免得误导你
+png("DEseq_RAWvsNORM.png",height = 800,width = 800)                    #jimmy的代码
+par(cex = 0.7)
+n.sample=ncol(exprMatrix_rlog)
+if(n.sample>40) par(cex = 0.5)
+cols <- rainbow(n.sample*1.2)
+par(mfrow=c(2,2))
+boxplot(datagene, col = cols,main="expression value",las=2)            #datagene是原始的count数据  
+boxplot(exprMatrix_rlog, col = cols,main="expression value",las=2)     #exprMatrix_rlog为新的标准化后数据
+hist(as.matrix(datagene))                                              #下面两个是数据分布柱状图
+hist(exprMatrix_rlog)
+dev.off()
+## 上面的代码如果你不感兴趣不需要运行，免得误导你
+
+
+
+
+
+##生成差异结果文件##
+res
+class(res)                                                             #应该是两种
+res<-as.data.frame(res)
+head(res)
+resOrdered <- res[order(res$padj),]                                    #生成一个升序排列文件
+resOrdered<-cbind(rownames(resOrdered),resOrdered)
+colnames(resOrdered)<-c("gene_id","baseMean","log2FoldChange","lfcSE","stat","pvalue","padj")
+head(resOrdered)
+write.csv(resOrdered,'case-control-all-DESeq2.gene.csv',row.names = F,col.names = T)) 
+
+
+
+
+
+
+##生成FDR<0.05文件##
+resSig<-resOrdered[which(resOrdered$padj<0.05 & abs(resOrdered$log2FoldChange)>1),]
+resSig[which(resSig$log2FoldChange>0),"up_down"]<-"up"
+resSig[which(resSig$log2FoldChange<0),"up_down"]<-"down"
+resSig <- resSig[order(resSig$padj),]
+head(resSig)
+write.csv(resSig,'case-control-differ-pvalue-0.05-FC-2.gene.csv',row.names = F,col.names = T)) 
+#write.table(resSig,"case-control-differ-pvalue-0.05-FC-2.gene.csv",sep = "\t",
+             col.names = TRUE,row.names = F,quote = F,na="")
+             
+             
+             
+
+
+
