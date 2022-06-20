@@ -21,18 +21,18 @@ library(limma)
 
 
 ##数据清洗##
-data1<-read.table("./Protein1.txt",sep="\t",header=T)  #protein为用subio处理出的测序数据
-avereps(data1[,-1],ID=data1$id)           #重复序列取均值，前半部分为只保留矩阵，后半部分设id（基因名）列为被查找的重复列
-datagene<-data1[!duplicated(data1$id),]   #合并删除重复序列
+data1<-read.table("./Protein1.txt",sep="\t",header=T)           #protein1为用subio处理出的测序数据
+avereps(data1[,-1],ID=data1$id)                                 #重复序列取均值，前半部分为只保留矩阵，后半部分设id（基因名）列为被查找的重复列
+datagene<-data1[!duplicated(data1$id),]                         #合并删除重复序列
 row.names(datagene)<-datagene[,1]
 datagene<-datagene[,-1]
-datagene[is.na(datagene)] <- 0  #na全赋值为0
+datagene[is.na(datagene)] <- 0                                  #na全赋值为0
 any(is.na(data1))
 datagene<-as.matrix(datagene)
 any(is.na(datagene))
 summary(datagene)
-datagene<-as.numeric(datagene)   ##
-datatest<-datagene[!rowMeans(datagene)==0,] #去除全为0的行
+datagene<-as.numeric(datagene) 
+datatest<-datagene[!rowMeans(datagene)==0,]                     #去除全为0的行
 datagene<-datatest
 
 
