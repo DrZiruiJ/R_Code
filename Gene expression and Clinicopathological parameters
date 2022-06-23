@@ -1,0 +1,132 @@
+
+
+######################################################################
+######## Gene expression and Clinicopathological parameters ##########
+######################################################################
+
+
+library(limma)
+library(ggplot2)
+library(ggpubr)
+
+
+
+#先得到基因在正常与肿瘤组织中表达的箱线图#
+
+gene="Foxp3"                                              #更换基因名即可
+expFile="symbol.txt"                                      #上传在了Gene expression and Clinicopathological parameters File文件夹
+
+
+
+rt=read.table(expFile, header=T, sep="\t", check.names=F)
+rt=as.matrix(rt)
+rownames(rt)=rt[,1]
+exp=rt[,2:ncol(rt)]
+dimnames=list(rownames(exp),colnames(exp))
+data=matrix(as.numeric(as.matrix(exp)), nrow=nrow(exp), dimnames=dimnames)
+data=avereps(data)
+data=t(data[gene,,drop=F])
+
+
+group=sapply(strsplit(rownames(data),"\\-"), "[", 4)
+group=sapply(strsplit(group,""), "[", 1)
+group=gsub("2", "1", group)
+conNum=length(group[group==1])      
+treatNum=length(group[group==0])    
+Type=c(rep(1,conNum), rep(2,treatNum))
+
+
+exp=cbind(data, Type)
+exp=as.data.frame(exp)
+colnames(exp)=c("gene", "Type")
+exp$Type=ifelse(exp$Type==1, "Normal", "Tumor")
+exp$gene=log2(exp$gene+1)
+
+
+outTab=exp
+colnames(outTab)=c(gene, "Type")
+outTab=cbind(ID=row.names(outTab), outTab)
+write.table(outTab, file="geneExp.txt", sep="\t", quote=F, row.names=F)
+
+
+
+group=levels(factor(exp$Type))
+exp$Type=factor(exp$Type, levels=group)
+comp=combn(group,2)
+my_comparisons=list()
+for(i in 1:ncol(comp)){my_comparisons[[i]]<-comp[,i]}
+
+
+
+boxplot=ggboxplot(exp, x="Type", y="gene", color="Type",
+		          xlab="",
+		          ylab=paste0(gene, " expression"),
+		          legend.title="Type",
+		          palette = c("blue","red"),
+		          add = "jitter")+ 
+	stat_compare_means(comparisons=my_comparisons,symnum.args=list(cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")),label = "p.signif")
+
+
+
+
+pdf(file=paste0(gene,".diff.pdf"), width=5, height=4.5)
+print(boxplot)
+dev.off()
+
+
+#拿到geneExp.txt文件后继续向下#
+
+expFile="geneExp.txt"      
+cliFile="clinical.txt"      
+
+
+
+rt=read.table(expFile, header=T, sep="\t", check.names=F, row.names=1)
+gene=colnames(rt)[1]
+
+
+tumorData=rt[rt$Type=="Tumor",1,drop=F]
+tumorData=as.matrix(tumorData)
+rownames(tumorData)=gsub("(.*?)\\-(.*?)\\-(.*?)\\-(.*?)\\-.*", "\\1\\-\\2\\-\\3", rownames(tumorData))
+data=avereps(tumorData)
+
+
+cli=read.table(cliFile, header=T, sep="\t", check.names=F, row.names=1)
+cli[,"Age"]=ifelse(cli[,"Age"]=="unknow", "unknow", ifelse(cli[,"Age"]>65,">65","<=65"))
+
+
+samSample=intersect(row.names(data), row.names(cli))
+data=data[samSample,,drop=F]
+cli=cli[samSample,,drop=F]
+rt=cbind(data, cli)
+
+
+for(clinical in colnames(rt[,2:ncol(rt)])){
+	data=rt[c(gene, clinical)]
+	colnames(data)=c(gene, "clinical")
+	data=data[(data[,"clinical"]!="unknow"),]
+	
+	group=levels(factor(data$clinical))
+	data$clinical=factor(data$clinical, levels=group)
+	comp=combn(group,2)
+	my_comparisons=list()
+	for(i in 1:ncol(comp)){my_comparisons[[i]]<-comp[,i]}
+	
+	boxplot=ggboxplot(data, x="clinical", y=gene, fill="clinical",
+		          xlab=clinical,
+		          ylab=paste(gene, " expression"),
+		          legend.title=clinical)+ 
+	    stat_compare_means(comparisons = my_comparisons)
+	
+	pdf(file=paste0("clinicalCor_", clinical, ".pdf"), width=5.5, height=5)
+	print(boxplot)
+	dev.off()
+}
+
+
+
+
+
+
+
+
