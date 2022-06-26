@@ -1,0 +1,27 @@
+
+
+
+ans<-0    ans <- ans + i # 将每次的值累加
+
+#for循环#
+for (i in 1:nrow(rawexprSet)) {
+  rawexprSet[i,10]<-2^rawexprSet[i,10]
+}
+
+
+#if条件应用#
+if (逻辑判断值){
+  expr1
+}else{
+  expr2
+}
+
+
+#for循环与if条件联合应用#
+for (i in 1:nrow(rawexprSet)) {
+if ( rawexprSet[i,10]<1){
+  rawexprSet[i,10]<- -1/rawexprSet[i,10]
+}else{
+  rawexprSet[i,10]
+}
+}
