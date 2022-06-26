@@ -1,0 +1,114 @@
+
+
+######################################################################
+###################      Then  for limma/voom        #################
+######################################################################
+
+
+
+source("http://bioconductor.org/biocLite.R")
+biocLite("Limma")
+
+#DGE for microarray by limma
+library('ggplot2')
+library('limma')
+library(xlsx)
+library(dplyr)
+
+
+#读入
+rawexprSet=read.table("./GSE190465_series_matrix.txt",sep="\t",header=T)
+
+
+
+
+
+
+#数据清洗
+dim(rawexprSet)
+colnames(rawexprSet)
+rawexprSet<-rawexprSet%>%select("ID_REF"   ,  "GSM5724115" ,
+                                "GSM5724116" ,"GSM5724117", "GSM5724118" ,
+                                "GSM5724119", "GSM5724120")
+avereps(rawexprSet[,-1],ID=rawexprSet$ID_REF)                                 #重复序列取均值，前半部分为只保留矩阵，后半部分设id（基因名）列为被查找的重复列
+datagene<-rawexprSet[!duplicated(rawexprSet$ID_REF),]                         #合并删除重复序列
+row.names(datagene)<-datagene[,1]
+datagene<-datagene[,-1]
+rawexprSet<-datagene
+
+
+
+
+
+exprSet=log2(rawexprSet)#log2转换
+exprSet=rawexprSet#如果已经是log2数据，运行这一步
+exprSet[1:5,1:5]
+
+
+
+
+
+## 画箱线图，比较数据分布情况
+n.sample=ncol(rawexprSet)
+cols <- rainbow(n.sample)
+#par(mfrow=c(2,2))   一张图上四个小表格
+boxplot(data.frame(exprSet),col=cols) 
+ggsave("boxplot1.pdf", width = 8, height = 16)
+dev.off()
+
+
+
+
+
+
+
+#读取样本分类信息
+colnames(rawexprSet)
+group <- read.csv("datTraits.csv",header=TRUE,row.names=1,check.names = FALSE)
+design <- model.matrix(~0+factor(group$treat_type))#把group设置成一个model matrix#
+colnames(design)=levels(factor(group$treat_type))
+rownames(design)=colnames(exprSet)
+design
+
+fit <- lmFit(exprSet,design)##线性拟合
+cont.matrix<-makeContrasts(Ischemia-Shame,levels = design)
+fit2=contrasts.fit(fit,cont.matrix)##用对比模型进行差值计算
+fit2 <- eBayes(fit2)  ##贝叶斯检验
+#eBayes() with trend=TRUE
+tempOutput = topTable(fit2,coef=1,n=Inf,adjust="BH",sort.by="B",resort.by="M") 
+nrDEG = na.omit(tempOutput)
+
+write.csv(nrDEG, "limmaOut.csv")
+
+
+
+
+
+
+
+
+#筛选有显著差异的基因  adj.P.Val意思是矫正后P值
+foldChange=1 #fold change=1意思是差异是两倍
+pvalue =0.05 #0.05
+
+diff <- nrDEG
+diffSig = diff[(diff$P.Val < pvalue & (diff$logFC>foldChange | diff$logFC<(-foldChange))),]
+#write.table(diffSig, file="diffSig.xls",sep="\t",quote=F)
+write.csv(diffSig, "diffSig.csv")
+
+
+
+
+
+
+#把上调和下调分别输入up和down两个文件
+diffUp = diff[(diff$P.Val < pvalue & (diff$logFC>foldChange)),]#foldchange>0是上调，foldchange<0是下调#
+#write.table(diffUp, file="up.xls",sep="\t",quote=F)#把上调和下调分别输入up和down两个文件#
+write.csv(diffUp, "diffUp.csv")
+diffDown = diff[(diff$P.Val< pvalue & (diff$logFC<(-foldChange))),]
+#write.table(diffDown, file="down.xls",sep="\t",quote=F)
+write.csv(diffDown, "diffDown.csv")
+
+
+
+
