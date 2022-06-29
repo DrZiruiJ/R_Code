@@ -72,7 +72,7 @@ normalizedCounts1 <- t( t(counts(dds)) / sizeFactors(dds) )     # 生成TPM格�
 normalizedCounts2 <- counts(dds, normalized=T)                  # it's the same for the tpm value
 exprMatrix_rpm=as.data.frame(normalizedCounts1) 
 head(exprMatrix_rpm)
-write.csv(exprMatrix_rpm,'exprMatrix.rpm.csv' )                 #保存TEP数据到csv格式
+write.csv(exprMatrix_rpm,'exprMatrix.rpm.csv' )                 #保存TPM数据到csv格式
 
 #as.data.frame(exprMatrix_rpm)
 #write.table(exprMatrix_rpm,"exprMatrix_rpm.xls",sep = "\t",col.names = TRUE,  
