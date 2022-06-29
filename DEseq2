@@ -68,7 +68,7 @@ exprMatrix_rlog=assay(rld)
 write.csv(exprMatrix_rlog,'exprMatrix.rlog.csv' )               #保存rlog数据到csv格式
 
 
-normalizedCounts1 <- t( t(counts(dds)) / sizeFactors(dds) )     # 生成TEP格式数据
+normalizedCounts1 <- t( t(counts(dds)) / sizeFactors(dds) )     # 生成TPM格式数据
 normalizedCounts2 <- counts(dds, normalized=T)                  # it's the same for the tpm value
 exprMatrix_rpm=as.data.frame(normalizedCounts1) 
 head(exprMatrix_rpm)
