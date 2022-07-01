@@ -58,7 +58,8 @@ dds
 ##数据过滤##
 # dds <- dds[ rowSums(counts(dds)) > 1 ,]
 dds<-DESeq(dds)
-sizeFactors(dds)                                                #出现小数点证明前面的操作成功
+sizeFactors(dds)                                                #出现小数点证明前面的操作成功,estimates size factors to account for differences in sequencing 
+                                                                #depth. So the value are typically centered around 1. 
 res <- results(dds, contrast=c("condition","case","control"))   ########注意case组在前，control在后，输出结果
 
 
