@@ -1,0 +1,173 @@
+######################################################################
+#######  Limma包差异分析+热图+火山图+GO分析+KEGG分析+GSEA分析   #########
+######################################################################
+
+#预先准备#
+
+#下载如下，是txt格式文件，下载后命名为【1_GSE42872_series_matrix.txt】，随后我们还要准备代码文件【0_GEO_limma.R】和
+#平台文件【1_PlatformMap.txt】，我们把这三个文件放在一个文件夹下：
+
+
+
+
+
+### 1.读入探针矩阵数据
+### 2.数据预处理：NA去除+log2转换+样本芯片矫正
+### 3.探针ID和基因名symbol转换
+### 4.基因Symbol表达矩阵获取：探针矩阵转换为基因Symbol矩阵+同名symbol保留表达量的最大值。
+### 5.使用limma包来做芯片的差异分析
+### 6.输出差异基因
+### 7. 作图，差异表达图，热图，火山图。
+### 8. 差异基因GO分析
+### 9. 差异基因KEGG分析
+### 10. 差异基因集的GSEA富集分析。
+
+
+
+
+##################################################################################################
+### 1.读入探针矩阵数据
+##################################################################################################
+exprSet <- read.table("1_GSE42872_series_matrix.txt",
+                      comment.char="!",
+                      stringsAsFactors=F,
+                      header=T)### comment.char="!" 意思是！开头的行作为注释
+
+rownames(exprSet) <- exprSet[,1]
+exprSet <- exprSet[,-1]### 第一列变成行名
+
+
+
+
+
+
+
+##################################################################################################
+### 2.数据预处理：NA去除+log2转换+样本芯片矫正
+##################################################################################################
+## NA的去除，公众号：科研部
+ex <- exprSet
+qx <- as.numeric(quantile(ex, c(0., 0.25, 0.5, 0.75, 0.99, 1.0), na.rm=T))
+LogC <- (qx[5] > 100) ||
+  (qx[6]-qx[1] > 50 && qx[2] > 0) ||
+  (qx[2] > 0 && qx[2] < 1 && qx[4] > 1 && qx[4] < 2)
+
+## 自动判断是否需要log2转换，需要则进行log2转换
+if (LogC) {
+  ex[which(ex <= 0)] <- NaN
+  ## 取log2
+  exprSet <- log2(ex)
+  print("log2 transform finished")
+}else{
+  print("log2 transform not needed")
+}
+
+## 样本芯片矫正
+library(limma)
+boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之前单个样本值，此时平不平都无所谓。
+exprSet=normalizeBetweenArrays(exprSet)### 该函数默认使用quntile 矫正样本间差异。（公众号：科研部）
+boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之后单个样本值，此时是平的。
+exprSet <- as.data.frame(exprSet)
+
+
+
+
+##################################################################################################
+### 3.探针ID和基因名symbol转换
+##################################################################################################
+## 读入platformMap.txt文件，platformMap 中有常见的GPL平台和ID转换需要的R包（一一对应）。
+platformMap <- data.table::fread("1_platformMap.txt",data.table = F)
+
+## 找到该平台对应的ID转换R包
+index <- "GPL6244"
+## 数据储存在bioc_package这一列中
+paste0(platformMap$bioc_package[grep(index,platformMap$gpl)],".db")
+
+## 安装该R包
+#if (!require("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+#BiocManager::install("hugene10sttranscriptcluster.db")
+
+## 加载该R包，并将探针ID转换成基因symbol
+library(hugene10sttranscriptcluster.db)
+probe2symbol_df <- toTable(get("hugene10sttranscriptclusterSYMBOL"))
+
+#
+#这一步就是你要改这个平台GPL6244（就是把index <- "GPL6244"改成你自己数据的GPL号），告诉它我的芯片平台
+#是GPL6244，然后用里面对应的R包进行ID转换，把探针的数字ID转换成基因名Symbol。
+#
+
+
+
+
+
+##################################################################################################
+### 4.基因Symbol表达矩阵获取：探针矩阵转换为基因Symbol矩阵+同名symbol保留表达量的最大值。
+##################################################################################################
+library(dplyr)
+library(tibble)
+exprSet <- exprSet %>%
+  rownames_to_column("probe_id") %>%
+  inner_join(probe2symbol_df,by="probe_id") %>%
+  select(-probe_id) %>%
+  select(symbol,everything()) %>%
+  mutate(rowMean =rowMeans(.[,-1])) %>%
+  arrange(desc(rowMean)) %>%
+  distinct(symbol,.keep_all = T) %>%
+  select(-rowMean) %>%
+  column_to_rownames("symbol")
+
+save(exprSet,file = "2_exprSet_rmdup.Rdata")
+
+
+
+##################################################################################################
+### 5.使用limma包来做芯片的差异分析
+##################################################################################################
+## 1.创建分组
+group <- c(rep("con",3),rep("treat",3))#意思是在矩阵里面前面3个对照组，后面3个实验组
+group <- factor(group,levels = c("con","treat"))
+
+## 样本PCA主成分分析：提前预测结果，看两组样本是否分开，分开则说明差异挺大的，可以进行差异分析。
+res.pca <- prcomp(t(exprSet), scale = TRUE)
+library(factoextra)
+fviz_pca_ind(res.pca,col.ind = group)
+
+## 构建比较矩阵
+design <- model.matrix(~group)
+## 比较矩阵命名
+colnames(design) <- levels(group)
+design
+
+## 2.线性模型拟合
+fit <- lmFit(exprSet,design)
+## 3.贝叶斯检验
+fit2 <- eBayes(fit)
+## 4.输出差异分析结果,其中coef的数目不能操过design的列数
+allDiff=topTable(fit2,adjust='fdr',coef=2,number=Inf)
+## 这个数据很重要需要保存一下
+save(allDiff,file = "2_allDiff.Rdata")
+
+#
+#这一步，唯一要改的是group <- c(rep("con",3),rep("treat",3))#意思是在矩阵里面，
+#前面3个是对照组，后面3个是实验组。那分好组后，PCA看是否分开。分的很开的，差异分析才可靠。
+#
+
+
+##################################################################################################
+### 6.输出差异基因
+##################################################################################################
+#定义差昇基因:差昇倍数2倍(logFC为1)，矫正后的p値小于0.05
+library(dplyr)
+diffgene <- allDiff %>%
+  filter(adj.P.Val<0.05) %>%
+  filter(abs(logFC)>1)
+
+##差异基因和矩阵合并
+diffgene_count <- merge(as.data.frame(diffgene),as.data.frame(as.data.frame(exprSet)), by="row.names", sort= F)
+##保存差异基因的表达矩阵
+write. csv(diffgene_ count,file= "2_ diffgene_ count. csv", row. names = т)
+
+
+
+
