@@ -25,3 +25,34 @@ if ( rawexprSet[i,10]<1){
   rawexprSet[i,10]
 }
 }
+
+
+
+###箱线图for循环，批量输出表达比较图###
+library(ggplot2)
+library(ggpubr)
+my_comparisons <- list(c("Control","Ischemia"),c("Control","Reperfusion-30"),
+                       c("Control","Reperfusion-120"),c("Ischemia","Reperfusion-30"),
+                       c("Ischemia","Reperfusion-120"))
+dir.create("copper boxplot")
+
+#重大创新！！！！
+for (i in 1:nrow(gene1)) {             #gene1为单列的基因名数据框#
+  name1=paste0("./copper boxplot/boxplot_",gene1[i,1],".png")
+#pdf(file=   name1)
+p1<-ggboxplot(
+  dd, x = "group", y = gene1[i,1],                            #第888888888888处需要改的地方，把CD36改成自己的基因。
+  color = "group",# palette = c("#00AFBB", "#E7B800"),
+  add = "jitter")+
+  stat_compare_means(comparisons = my_comparisons, method = "t.test")
+
+ggsave(name1,                          #较为安全的图片保存格式
+       p1,
+       width = 12,
+       height = 8)
+}
+
+
+
+
+
