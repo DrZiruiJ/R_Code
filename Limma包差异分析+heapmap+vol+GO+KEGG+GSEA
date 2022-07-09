@@ -101,12 +101,12 @@ library(tibble)
 exprSet <- exprSet %>%                                                  ##万能代码，不管用##
   rownames_to_column("probe_id") %>%
   inner_join(probe2symbol_df,by="probe_id") %>%
-  select(-probe_id) %>%
-  select(symbol,everything()) %>%
+  dplyr::select(-probe_id)%>%
+  dplyr::select(symbol,everything()) %>%
   mutate(rowMean =rowMeans(.[,-1])) %>%
-  arrange(desc(rowMean)) %>%
+  dplyr::arrange(desc(rowMean)) %>%
   distinct(symbol,.keep_all = T) %>%
-  select(-rowMean) %>%
+  dplyr::select(-rowMean) %>%
   column_to_rownames("symbol")
 
 save(exprSet,file = "2_exprSet_rmdup.Rdata")                            #将基因表达矩阵保存起来
