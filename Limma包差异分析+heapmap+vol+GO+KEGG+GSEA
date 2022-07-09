@@ -69,6 +69,10 @@ exprSet=normalizeBetweenArrays(exprSet)### 该函数默认使用quntile 矫正�
 boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之后单个样本值，此时是平的。
 exprSet <- as.data.frame(exprSet)
 
+#代码输出图片方式
+pdf("Row data plot.pdf",width = 12,height = 9)
+boxplot(exprSet,outline=FALSE, notch=T, las=2)
+dev.off()
 
 ##################################################################################################
 ### 3.探针ID和基因名symbol转换
