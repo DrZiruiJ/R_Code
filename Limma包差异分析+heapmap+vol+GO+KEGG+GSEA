@@ -2,44 +2,44 @@
 #######  Limma包差异分析+热图+火山图+GO分析+KEGG分析+GSEA分析   #########
 ######################################################################
 
-#预先准备#
-
-#下载如下，是txt格式文件，下载后命名为【1_GSE42872_series_matrix.txt】，随后我们还要准备代码文件【0_GEO_limma.R】和
-#平台文件【1_PlatformMap.txt】，我们把这三个文件放在一个文件夹下：
-
-
-
 
 
 ### 1.读入探针矩阵数据
 ### 2.数据预处理：NA去除+log2转换+样本芯片矫正
 ### 3.探针ID和基因名symbol转换
 ### 4.基因Symbol表达矩阵获取：探针矩阵转换为基因Symbol矩阵+同名symbol保留表达量的最大值。
-### 5.使用limma包来做芯片的差异分析
+### 5.使用limma包来做芯片的差异分析(非配对)------选一个就行
+### 5.使用limma包来做芯片的差异分析(配对)------选一个就行
 ### 6.输出差异基因
-### 7. 作图，差异表达图，热图，火山图。
-### 8. 差异基因GO分析
-### 9. 差异基因KEGG分析
-### 10. 差异基因集的GSEA富集分析。
+### 7. 作图，差异表达图、热图、火山图
+### 8. 差异基因集的GO分析
+### 9. 差异基因集的KEGG分析
+### 10. 差异基因集的GSEA富集分析
 
 
+### 400多行代码，你只要改18个地方，这个代码就能为你所用。
+##################################################################################################
+
+
+##################################################################################################
+### 0. 镜像
+##################################################################################################
+options(download.file.method = 'libcurl')
+options(url.method='libcurl')
+options(BioC_mirror="https://mirrors.ustc.edu.cn/bioc/")
+options("repos" = c(CRAN="https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
 
 
 ##################################################################################################
 ### 1.读入探针矩阵数据
 ##################################################################################################
-exprSet <- read.table("1_GSE42872_series_matrix.txt",
+exprSet <- read.table("1_input.txt",
                       comment.char="!",
                       stringsAsFactors=F,
-                      header=T)### comment.char="!" 意思是！开头的行作为注释
+                      header=T)                        ### comment.char="!" 意思是！开头的行作为注释
 
 rownames(exprSet) <- exprSet[,1]
 exprSet <- exprSet[,-1]### 第一列变成行名
-
-
-
-
-
 
 
 ##################################################################################################
@@ -70,35 +70,23 @@ boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之后单个样本值，此
 exprSet <- as.data.frame(exprSet)
 
 
-
-
 ##################################################################################################
 ### 3.探针ID和基因名symbol转换
 ##################################################################################################
-## 读入platformMap.txt文件，platformMap 中有常见的GPL平台和ID转换需要的R包（一一对应）。
-platformMap <- data.table::fread("1_platformMap.txt",data.table = F)
+platformMap <- data.table::fread("1_platformMap.txt",data.table = F)     ## 读入platformMap.txt文件，platformMap 中有常见的GPL平台和ID转换需要的R包（一一对应）。
+index <- "GPL6102"                                                       ## 第11111111111处需要改的地方，改成你自己数据的GPL平台,输入GPL号，找到该平台对应的ID转
+                                                                         ## 换R包，这个在GEO检索的页面有
+paste0(platformMap$bioc_package[grep(index,platformMap$gpl)],".db")      ## 我们要看这一步结果，看这个GPL平台是通过什么R包来进行ID转换的的。
 
-## 找到该平台对应的ID转换R包
-index <- "GPL6244"
-## 数据储存在bioc_package这一列中
-paste0(platformMap$bioc_package[grep(index,platformMap$gpl)],".db")
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
 
-## 安装该R包
-#if (!require("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("hugene10sttranscriptcluster.db")
-
-## 加载该R包，并将探针ID转换成基因symbol
-library(hugene10sttranscriptcluster.db)
-probe2symbol_df <- toTable(get("hugene10sttranscriptclusterSYMBOL"))
-
-#
-#这一步就是你要改这个平台GPL6244（就是把index <- "GPL6244"改成你自己数据的GPL号），告诉它我的芯片平台
-#是GPL6244，然后用里面对应的R包进行ID转换，把探针的数字ID转换成基因名Symbol。
-#
+BiocManager::install("illuminaHumanv2.db")                               ## 第22222222222处需要改的地方，将illuminaHumanv2.db改为你需要安装的包，##安装这包。
 
 
-
+library(illuminaHumanv2.db)                                              ## 第3333333333333333处需要改的地方，             ## 加载该R包。
+probe2symbol_df <- toTable(get("illuminaHumanv2SYMBOL"))                 ## 第44444444444处需要改的地方，用该R包里面的illuminaHumanv2SYMBOL函数将探针ID转换成
+                                                                         ## 基因symbol，得到ID-symbol对应表
 
 
 ##################################################################################################
@@ -106,7 +94,7 @@ probe2symbol_df <- toTable(get("hugene10sttranscriptclusterSYMBOL"))
 ##################################################################################################
 library(dplyr)
 library(tibble)
-exprSet <- exprSet %>%
+exprSet <- exprSet %>%                                                  ##万能代码，不管用##
   rownames_to_column("probe_id") %>%
   inner_join(probe2symbol_df,by="probe_id") %>%
   select(-probe_id) %>%
@@ -117,21 +105,28 @@ exprSet <- exprSet %>%
   select(-rowMean) %>%
   column_to_rownames("symbol")
 
-save(exprSet,file = "2_exprSet_rmdup.Rdata")
-
+save(exprSet,file = "2_exprSet_rmdup.Rdata")                            #将基因表达矩阵保存起来
 
 
 ##################################################################################################
-### 5.使用limma包来做芯片的差异分析
+### 5.使用limma包来做芯片的差异分析---非配对差异分析
 ##################################################################################################
+rm(list = ls())#清除
+## 0. 加载表达数据
+load(file = "2_exprSet_rmdup.Rdata")
+
 ## 1.创建分组
-group <- c(rep("con",3),rep("treat",3))#意思是在矩阵里面前面3个对照组，后面3个实验组
+group <- c(rep("con",18),rep("treat",18))##第555555555555处需要改的地方，意思是在矩阵里面前面18个对照组，后面18个实验组
 group <- factor(group,levels = c("con","treat"))
 
 ## 样本PCA主成分分析：提前预测结果，看两组样本是否分开，分开则说明差异挺大的，可以进行差异分析。
 res.pca <- prcomp(t(exprSet), scale = TRUE)
 library(factoextra)
 fviz_pca_ind(res.pca,col.ind = group)
+
+#                                                         #
+# 如果有个别样本分的不好，应该在input文件里面将这个样本删除才行#
+#                                                         #
 
 ## 构建比较矩阵
 design <- model.matrix(~group)
@@ -143,31 +138,326 @@ design
 fit <- lmFit(exprSet,design)
 ## 3.贝叶斯检验
 fit2 <- eBayes(fit)
-## 4.输出差异分析结果,其中coef的数目不能操过design的列数
-allDiff=topTable(fit2,adjust='fdr',coef=2,number=Inf)
+## 4.输出差异分析结果,其中coef的数目不能超过design的列数
+allDiff=topTable(fit2,adjust='fdr',coef=2,number=Inf, p.value=0.05)
 ## 这个数据很重要需要保存一下
 save(allDiff,file = "2_allDiff.Rdata")
 
-#
-#这一步，唯一要改的是group <- c(rep("con",3),rep("treat",3))#意思是在矩阵里面，
-#前面3个是对照组，后面3个是实验组。那分好组后，PCA看是否分开。分的很开的，差异分析才可靠。
-#
+
+##################################################################################################
+### 5.使用limma包来做芯片的差异分析---配对差异分析
+##################################################################################################
+rm(list = ls())#清除
+## 0. 加载表达数据
+load(file = "2_exprSet_rmdup.Rdata")
+
+## 1.创建分组
+group <- c(rep("con",18),rep("treat",18))                  ##第5555555处需要改的地方，意思是在矩阵里面前面18个对照组，后面18个实验组
+group <- factor(group,levels = c("con","treat"))
+
+## 2.样本PCA主成分分析：提前预测结果，看两组样本是否分开，分开则说明差异挺大的，可以进行差异分析。
+res.pca <- prcomp(t(exprSet), scale = TRUE)
+library(factoextra)
+fviz_pca_ind(res.pca,col.ind = group)
+
+design <- model.matrix(~group)
+fit <- lmFit(exprSet,design)
+fit2 <- eBayes(fit)
+
+### 3. 在此基础上进行配对分析
+group <- c(rep("con",18),rep("treat",18))                  ##第5555555555555处需要改的地方，意思是在矩阵里面前面18个对照组，后面18个实验组
+group <- factor(group,levels = c("con","treat"))
+pairinfo = factor(rep(1:18,2))##第555555555555处需要改的地方，加一个配对信息，几个样本就是1：几
+
+### 4. 配对分析
+design=model.matrix(~ pairinfo+group)
+fit <- lmFit(exprSet,design)
+fit2 <- eBayes(fit)
+allDiff=topTable(fit2,adjust='fdr',coef=ncol(design),number=Inf, p.value=0.05)
+## 这个数据很重要需要保存一下
+save(allDiff,file = "2_allDiff.Rdata")
+write.csv(allDiff,file= "2_limma_result.csv",row.names = T)
 
 
 ##################################################################################################
 ### 6.输出差异基因
 ##################################################################################################
-#定义差昇基因:差昇倍数2倍(logFC为1)，矫正后的p値小于0.05
+## 定义差异基因：logFC为0.5，矫正后的p值小于0.05
 library(dplyr)
 diffgene <- allDiff %>%
-  filter(adj.P.Val<0.05) %>%
-  filter(abs(logFC)>1)
+  filter(adj.P.Val < 0.05) %>%                            #第6666666处需要改的地方
+  filter(abs(logFC) >0.5)                                 #第777777777处需要改的地方
 
-##差异基因和矩阵合并
-diffgene_count <- merge(as.data.frame(diffgene),as.data.frame(as.data.frame(exprSet)), by="row.names", sort= F)
-##保存差异基因的表达矩阵
-write. csv(diffgene_ count,file= "2_ diffgene_ count. csv", row. names = т)
+## 差异基因和矩阵合并
+diffgene_count <-  merge(as.data.frame(diffgene),as.data.frame(as.data.frame(exprSet)),by="row.names",sort=FALSE)
+## 保存差异基因的表达矩阵
+write.csv(diffgene_count,file= "2_diffgene_count.csv",row.names = T)
 
+
+##################################################################################################
+### 7. 作图，差异表达图，热图，火山图。
+##################################################################################################
+## 1. 数据处理成作图的格式
+exprSet <- as.data.frame(t(exprSet))#矩阵转置
+dd <- cbind(group=group,exprSet)#添加分组信息
+test = dd[,1:10]
+
+## 2.作图展示一个差异基因,我这里以CD36为例
+my_comparisons <- list(c("treat", "con"))
+library(ggpubr)
+ggboxplot(
+  dd, x = "group", y = "CD36",                            #第888888888888处需要改的地方，把CD36改成自己的基因。
+  color = "group", palette = c("#00AFBB", "#E7B800"),
+  add = "jitter")+
+  stat_compare_means(comparisons = my_comparisons, method = "t.test")
+
+## 改写成函数
+diffplot <- function(gene){
+  my_comparisons <- list(
+    c("treat", "con")
+  )
+  library(ggpubr)
+  ggboxplot(
+    dd, x = "group", y = gene,
+    color = "group", palette = c("#00AFBB", "#E7B800"),
+    add = "jitter"
+  )+
+    stat_compare_means(comparisons = my_comparisons, method = "t.test")
+}
+
+diffplot("CD36")                                          ##第999999999999处需要改的地方，把CD36改成自己的基因
+diffplot("MOXD1")                                         ##第10101010101010处需要改的地方，把CD36改成自己的基因
+
+### 4.画热图，选取一群adj.P.Val < 0.05和abs(logFC) >1的差异基因做热图
+rm(list = ls())
+## 1.加载表达数据
+load(file = "2_exprSet_rmdup.Rdata")
+## 2.加载差异列表
+load(file = "2_allDiff.Rdata")
+library(dplyr)
+diffgene <- allDiff %>%
+  filter(adj.P.Val < 0.05) %>%                           ##第111111111111处需要改的地方
+  filter(abs(logFC) >1)                                  ##第12121212121212处需要改的地方，注意看这个阈值有没有结果
+## 3.用名称提取部分数据用作热图绘制
+heatdata <- exprSet[rownames(diffgene),]
+## 4.制作一个分组信息用于注释
+group <- c(rep("con",18),rep("treat",18))                ##第131313131313处需要改的地方，意思是在矩阵里面前面18个对照组，后面18个实验组
+annotation_col <- data.frame(group)
+rownames(annotation_col) <- colnames(heatdata)
+## 加载热图的R包
+library(pheatmap)
+library(viridisLite)
+### 经过修饰的图
+pheatmap(heatdata, #热图的数据
+         cluster_rows = TRUE,#行聚类
+         cluster_cols = FALSE,#列聚类，可以看出样本之间的区分度
+         annotation_col =annotation_col, #标注样本分类
+         annotation_legend=TRUE, # 显示注释
+         show_rownames = T,# 显示行名
+         scale = "row", #以行来标准化，这个功能很不错
+         color = viridis(10, alpha = 1, begin = 0.5, end = 1, direction = 1),#调色
+         #filename = "heatmap_F.pdf",#是否保存
+         cellwidth = 9, # 格子宽度
+         cellheight = 9,# 格子高度
+         fontsize = 9 # 字体大小
+)
+
+### 5. 画火山图，即展示所有基因差异变化
+rm(list = ls())
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+load(file = "2_allDiff.Rdata")
+### 无论是什么名称，都改为data
+data <- allDiff
+data$gene <- rownames(data)
+logFCfilter = 0.5                        ### 0.5处画一条阈值线，                  ##第1414141414处需要改的地方，
+logFCcolor = 1                           ### 1以上的基因标记出来为绿色，           ##第1515151515处需要改的地方，
+### 标记上下调
+index = data$adj.P.Val <0.05 & abs(data$logFC) > logFCfilter
+data$group <- 0
+data$group[index & data$logFC>0] = 1
+data$group[index & data$logFC<0] = -1
+data$group <- factor(data$group,levels = c(1,0,-1),labels =c("Up","NS","Down") )
+### 正式画图
+ggplot(data=data, aes(x=logFC, y =-log10(adj.P.Val),color=group)) +
+  geom_point(alpha=0.8, size=1.2)+
+  scale_color_manual(values = c("darkred", "black", "royalblue4"))+
+  labs(x="log2 (fold change)",y="-log10 (adj.P.Val)")+
+  theme(plot.title = element_text(hjust = 0.4))+
+  geom_hline(yintercept = -log10(0.05),lty=4,lwd=0.6,alpha=0.8)+
+  geom_vline(xintercept = c(-logFCfilter,logFCfilter),lty=4,lwd=0.6,alpha=0.8)+
+  theme_bw()+
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black")) +
+  theme(legend.position="top")+
+  geom_point(data=subset(data, abs(logFC) >= logFCcolor & adj.P.Val <0.05),alpha=0.8, size=3,col="green2")+
+  geom_text_repel(data=subset(data, abs(logFC) >= logFCcolor & adj.P.Val <0.05),
+                  aes(label=gene),col="black",alpha = 0.8)
+
+
+##################################################################################################
+### 8. 差异基因集的GO富集分析。
+##################################################################################################
+rm(list = ls())
+library("clusterProfiler")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("ggplot2")
+
+#ID转换，Symbol转换为entrezID
+rt <-read.table(file="2_diffgene_count.csv", header=TRUE, sep=",")
+rt <- rt[,-1]### 删除第一列
+genes=as.vector(rt[,1])
+entrezIDs <- mget(genes, org.Hs.egSYMBOL2EG, ifnotfound=NA)                #找出基因对应的entrezID
+entrezIDs <- as.character(entrezIDs)
+out=cbind(rt,entrezID=entrezIDs)
+
+#GO富集分析
+rt=out[is.na(out[,"entrezID"])==F,]                                        #去除基因id为NA的基因
+gene=rt$entrezID
+geneFC=rt$logFC
+#geneFC=2^geneFC
+names(geneFC)=gene
+kk=enrichGO(gene = gene,OrgDb = org.Hs.eg.db, pvalueCutoff =1, qvalueCutoff = 1, ont="all", readable =T)#人的富集分析
+GO=as.data.frame(kk)
+GO=GO[(GO$pvalue<0.05),]                                                   #将P小于0.05的结果保留下来。
+write.table(GO,file="2_GO_P0.05.txt",sep="\t",quote=F,row.names = F)       #保存富集结果
+
+#定义显示Term数目
+showNum=10
+if(nrow(GO)<30){
+  showNum=nrow(GO)
+}
+
+#画柱状图,label_format=100参数让字体不重叠
+pdf(file="2_GO_P0.05_Top10_barplot.pdf",width = 9,height =7)
+bar=barplot(kk, drop = TRUE, showCategory =showNum,split="ONTOLOGY",color = "pvalue", label_format=100) + facet_grid(ONTOLOGY~., scale='free')
+print(bar)
+dev.off()
+
+#画气泡图
+pdf(file="2_GO_P0.05_Top10_bubble.pdf",width = 9,height =7)
+bub=dotplot(kk,showCategory = showNum, orderBy = "GeneRatio",split="ONTOLOGY", color = "pvalue", label_format=100) + facet_grid(ONTOLOGY~., scale='free')
+print(bub)
+dev.off()
+
+#画圈图
+pdf(file="2_GO_P0.05-Top5_circos.pdf",width = 9,height = 6.5)
+cnet=cnetplot(kk, foldChange=geneFC, showCategory = 5, circular = TRUE, colorEdge = TRUE)
+print(cnet)
+dev.off()
+
+
+##################################################################################################
+### 9. 差异基因集的KEGG富集分析。
+##################################################################################################
+rm(list = ls())
+library("clusterProfiler")
+library("org.Hs.eg.db")
+library("enrichplot")
+library("ggplot2")
+library("pathview")
+
+#ID转换，Symbol转换为entrezID
+rt <-read.table(file="2_diffgene_count.csv", header=TRUE, sep=",")
+rt <- rt[,-1]### 删除第一列
+genes=as.vector(rt[,1])
+entrezIDs <- mget(genes, org.Hs.egSYMBOL2EG, ifnotfound=NA)    #找出基因对应的entrezID
+entrezIDs <- as.character(entrezIDs)
+out=cbind(rt,entrezID=entrezIDs)
+
+#kegg富集分析-2022年7月7日更新此处--公众号：科研部
+rt=out[is.na(out[,"entrezID"])==F,]                            #去除基因id为NA的基因
+gene=rt$entrezID
+geneFC=rt$logFC
+#geneFC=2^geneFC
+names(geneFC)=gene
+# install.packages("R.utils")
+library(R.utils)
+R.utils::setOption("clusterProfiler.download.method","auto")
+kk <- enrichKEGG(gene = gene, organism = "hsa", pvalueCutoff =1, qvalueCutoff =1)
+library(DOSE)#entrez gene id转换成gene symbol
+kk<-setReadable(kk, OrgDb = org.Hs.eg.db, keyType="ENTREZID")
+KEGG=as.data.frame(kk)
+KEGG=KEGG[(KEGG$pvalue<0.05),]
+write.table(KEGG,file="2_KEGG_P0.05.txt",sep="\t",quote=F,row.names = F)
+
+#定义显示Term数目
+showNum=30
+if(nrow(KEGG)<showNum){
+  showNum=nrow(KEGG)
+}
+
+#柱状图
+pdf(file="2_KEGG_P0.05_Top30_barplot.pdf",width = 9,height = 7)
+barplot(kk, drop = TRUE, showCategory = showNum, color = "pvalue", label_format=100)
+dev.off()
+
+#气泡图
+pdf(file="2_KEGG_P0.05_Top30_bubble.pdf",width = 9,height = 7)
+dotplot(kk, showCategory = showNum, orderBy = "GeneRatio",color = "pvalue", label_format=100)
+dev.off()
+
+#圈图
+pdf(file="2_KEGG_P0.05_Top5_circos.pdf",width = 11,height = 7)
+kkx=setReadable(kk, 'org.Hs.eg.db', 'ENTREZID')
+cnetplot(kkx, foldChange=geneFC,showCategory = 5, circular = TRUE, colorEdge = TRUE,node_label="all")
+dev.off()
+
+#通路图---会map多很多信号通路，并下载下来
+keggxls=read.table("2_KEGG_P0.05.txt",sep="\t",header=T)
+dir.create("2_KEGG_P0.05_Mapplot")  #创建名为2_KEGG_P0.05_Mapplot的文件夹
+setwd("C:\\Users\\A\\Desktop\\GEO_limma（配对+非配对）\\2_KEGG_P0.05_Mapplot")       ###第161616161616处需要改的地方，进入这个文件夹，将后面的生成的文件保存在这个文件夹下。
+for(i in keggxls$ID){
+  pv.out <- pathview(gene.data = gene, pathway.id = i, species = "hsa", out.suffix = "pathview")
+}
+
+
+##################################################################################################
+### 10. 所有基因集的GSEA富集分析。
+##################################################################################################
+rm(list = ls())
+library(clusterProfiler)
+setwd("C:\\Users\\A\\Desktop\\GEO_limma（配对+非配对）")                            ##第17171717171717处需要改的地方，回到原来的文件夹
+load(file = "2_allDiff.Rdata")
+library(dplyr)
+df <- select(allDiff,-c(2:6))#删除后面不要的2-6列
+df$SYMBOL <- rownames(df)#行名变为第一列
+head(df)#查看前面几行
+dim(df)#数据总共几行几列
+#用clusterProfiler包里面的bitr转换ENTREZID和SYMBOL。
+df.id<-bitr(df$SYMBOL, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = "org.Hs.eg.db")    #这是人的，小鼠就把org.Hs.eg.db改为org.Mm.eg.db就行
+#让基因名、ENTREZID、logFC对应起来
+easy.df<-merge(df,df.id,by="SYMBOL",all=F)
+#按照logFC排序
+sortdf<-easy.df[order(easy.df$logFC, decreasing = T),]#降序排序
+#把logFC按照从大到小提取出来
+gene.expr = sortdf$logFC
+#给上面提取的flogFC对应上ENTREZID
+names(gene.expr) <- sortdf$ENTREZID
+
+####现在进行GSEA分析####
+library(R.utils)
+R.utils::setOption("clusterProfiler.download.method","auto")
+kk <- gseKEGG(gene.expr, organism = "hsa", pvalueCutoff = 1)                         ####如果报错，在human和hsa，rno和rat之间来回切换，这跟您的网络相关，时间可能需要比较长。
+library(DOSE)#entrez gene id转换成gene symbol
+kk<-setReadable(kk, OrgDb = org.Hs.eg.db, keyType="ENTREZID")
+dim(kk)
+
+#按照enrichment score从高到低排序，便于查看富集通路
+sortkk<-kk[order(kk$enrichmentScore, decreasing = T),]
+head(sortkk)
+dim(sortkk)
+write.table(sortkk,"2_Allgene_gsea_output.txt",sep = "\t",quote = F,col.names = T,row.names = F)      #最后我们ID还要换成名字。
+
+#画自己想画的，这些hsa开头的都是对应刚刚生成的文件里面的，选择性的画就行。                                  #第18181818181818处需要改的地方，
+paths <- c("hsa03320", "hsa03010", "hsa04350", "hsa00062", "hsa04510", "hsa04022", "hsa03030", "hsa04020", "hsa04151", "hsa04152")
+library(enrichplot)
+gseaplot2(kk, paths)
+gseaplot2(kk, paths, color = colorspace::rainbow_hcl(10), pvalue_table = TRUE)                        ####把p值标上。
 
 
 
