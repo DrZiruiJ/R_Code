@@ -45,7 +45,7 @@ exprSet <- exprSet[,-1]### 第一列变成行名
 ##################################################################################################
 ### 2.数据预处理：NA去除+log2转换+样本芯片矫正
 ##################################################################################################
-## NA的去除，公众号：科研部
+## NA的去除
 ex <- exprSet
 qx <- as.numeric(quantile(ex, c(0., 0.25, 0.5, 0.75, 0.99, 1.0), na.rm=T))
 LogC <- (qx[5] > 100) ||
@@ -65,7 +65,7 @@ if (LogC) {
 ## 样本芯片矫正
 library(limma)
 boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之前单个样本值，此时平不平都无所谓。
-exprSet=normalizeBetweenArrays(exprSet)### 该函数默认使用quntile 矫正样本间差异。（公众号：科研部）
+exprSet=normalizeBetweenArrays(exprSet)### 该函数默认使用quntile 矫正样本间差异。
 boxplot(exprSet,outline=FALSE, notch=T, las=2)#矫正之后单个样本值，此时是平的。
 exprSet <- as.data.frame(exprSet)
 
