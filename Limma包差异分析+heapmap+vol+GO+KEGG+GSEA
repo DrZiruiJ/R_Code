@@ -161,6 +161,8 @@ group <- factor(group,levels = c("con","treat"))
 
 ## 2.样本PCA主成分分析：提前预测结果，看两组样本是否分开，分开则说明差异挺大的，可以进行差异分析。
 res.pca <- prcomp(t(exprSet), scale = TRUE)
+#install.packages("FactoMineR")
+#install.packages("factoextra") 
 library(factoextra)
 fviz_pca_ind(res.pca,col.ind = group)
 
