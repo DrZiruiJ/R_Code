@@ -45,7 +45,8 @@ p1<-ggboxplot(
   dd, x = "group", y = gene1[i,1],                            #第888888888888处需要改的地方，把CD36改成自己的基因。
   color = "group",# palette = c("#00AFBB", "#E7B800"),
   add = "jitter")+
-  stat_compare_means(comparisons = my_comparisons, method = "t.test")
+  stat_compare_means(comparisons = my_comparisons, method = "t.test")+
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)       #字体倾斜30度
 
 ggsave(name1,                          #较为安全的图片保存格式
        p1,
