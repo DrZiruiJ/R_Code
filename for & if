@@ -37,6 +37,7 @@ my_comparisons <- list(c("Control","Ischemia"),c("Control","Reperfusion-30"),
 dir.create("copper boxplot")
 
 #重大创新！！！！
+options(digits = 2)	                   #设定显示到小数点后两位
 for (i in 1:nrow(gene1)) {             #gene1为单列的基因名数据框#
   name1=paste0("./copper boxplot/boxplot_",gene1[i,1],".png")
 #pdf(file=   name1)
