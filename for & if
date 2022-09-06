@@ -3,10 +3,18 @@
 
 ans<-0    ans <- ans + i # 将每次的值累加
 
+
+
+
+
 #for循环#
 for (i in 1:nrow(rawexprSet)) {
   rawexprSet[i,10]<-2^rawexprSet[i,10]
 }
+
+
+
+
 
 
 #if条件应用#
@@ -17,6 +25,10 @@ if (逻辑判断值){
 }
 
 
+
+
+
+
 #for循环与if条件联合应用#
 for (i in 1:nrow(rawexprSet)) {
 if ( rawexprSet[i,10]<1){
@@ -25,6 +37,10 @@ if ( rawexprSet[i,10]<1){
   rawexprSet[i,10]
 }
 }
+
+
+
+
 
 
 
@@ -54,6 +70,29 @@ ggsave(name1,                          #较为安全的图片保存格式
        width = 12,
        height = 8)
 }
+
+
+
+
+
+
+#####将结果循环输入excel各个sheet中######
+library(rJava)
+library(xlsxjars)
+library(xlsx)
+
+for ( j in 1:9) {
+  
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =i) 
+for (i in 1:nrow(metadat)) {
+  
+metadat$Conbine[i]<-paste0(metadat[i,1],metadat[i,4],"/",metadat[i,6])
+}
+#####下面是以后读入Excel的标准格式####
+write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, row.names=FALSE) #####as.character()保证输出的是带引号的字符串很重要######
+#####上面是以后读入Excel的标准格式####
+}
+
 
 
 
