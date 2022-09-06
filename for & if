@@ -83,7 +83,7 @@ library(xlsx)
 
 for ( j in 1:9) {
   
-metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =i) 
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =j) 
 for (i in 1:nrow(metadat)) {
   
 metadat$Conbine[i]<-paste0(metadat[i,1],metadat[i,4],"/",metadat[i,6])
