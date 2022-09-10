@@ -2,3 +2,12 @@
 
 
 hist(n_g,break=30)    ##以30为间距画柱状图
+
+
+
+#代码输出图片方式(pdf,tiff等）
+pdf("Row data plot.pdf",width = 12,height = 9)
+boxplot(exprSet,outline=FALSE, notch=T, las=2)
+dev.off()
+
+
