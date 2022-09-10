@@ -1,4 +1,6 @@
-
+######################################################################
+###################            Save              #####################
+######################################################################
 
 
 save(a,dat,test1,fill="./test.Rdata")  #将三个保存到Rdata
@@ -6,6 +8,26 @@ save(a,dat,test1,fill="./test.Rdata")  #将三个保存到Rdata
 write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, row.names=FALSE) #####as.character()保证输出的是带引号的字符串很重要######
 
 
+
+
+
+
+
+######################################################################
+###################            Read              #####################
+######################################################################
+
+
+load(file = "./test.Rdata")
+
+
+
+library(xlsx)
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =2)   #读取xlsx表格
+
+
+
+exprSet <- read.table("1_input.txt", comment.char="!", stringsAsFactors=F, header=T)        ### comment.char="!" 意思是！开头的行作为注释
 
 
 
