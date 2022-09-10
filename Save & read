@@ -3,14 +3,20 @@
 ######################################################################
 
 
+1. 
 save(a,dat,test1,fill="./test.Rdata")  #将三个保存到Rdata
 
+
+2. 
 write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, row.names=FALSE) #####as.character()保证输出的是带引号的字符串很重要######
 
 
+3. 
+write.csv(diffgene_count,file= "2_diffgene_count.csv",row.names = T)
 
 
-
+4.
+write.table(merge,file="symbol.txt",sep="\t",quote=F,row.names=F) 
 
 
 ######################################################################
@@ -18,15 +24,21 @@ write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, r
 ######################################################################
 
 
+1. 
 load(file = "./test.Rdata")
 
 
-
-library(xlsx)
+2.
+library(xlsx) 
 metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =2)   #读取xlsx表格
 
 
+3.
+rt <-read.table(file="2_diffgene_count.csv", header=TRUE, sep=",")
 
+
+4.
+merge=read.table("./symbol.txt",sep="\t",header=T)
 exprSet <- read.table("1_input.txt", comment.char="!", stringsAsFactors=F, header=T)        ### comment.char="!" 意思是！开头的行作为注释
 
 
