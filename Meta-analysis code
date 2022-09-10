@@ -1,0 +1,419 @@
+#forest.meta(m, layout = "RevMan5")
+#metainf(m,pooled = "random")
+
+install.packages('metafor')
+install.packages('openxlsx')
+library(graphics)
+library(meta)
+library(xlsxjars)
+library(xlsx)
+library(ggplot2)
+
+
+
+#N
+x<-paste0("N","Stage.pdf")          #换           
+y<-paste0("N","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =2) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = F ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T, fixed   = F,xlab = "Lymph node metastasis",
+            label.left  = "LOX-",label.right = "LOX+",col.square = "#4682B4",
+            col.diamond = "red", col.diamond.lines = "black", 
+            layout = "JAMA") #换 #B4464B
+
+dev.off()
+pdf(y)
+funnel(m,xlab = "Lymph node metastasis")
+metabias(m,k.min=4)
+dev.off()
+
+#prediction = T,,fixed   = T#4682B4
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("N_sens.pdf",width = 7,height = 3)
+pic<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_N_sens<-forest(metainf(m,pooled = "random"),comb.random=T,xlab = "Lymph node metastasis",
+                   label.left  = "LOX-",label.right = "LOX+",col.square = "#4682B4",
+                   col.diamond = "red", col.diamond.lines = "black",
+                   layout = "JAMA")
+dev.off()
+
+
+#T
+x<-paste0("T","Forest.pdf")          #换           
+y<-paste0("T","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =1) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=F)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "Tumor invasion depth",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")   #换
+
+dev.off()
+pdf(y)
+funnel(m,xlab ="Tumor invasion depth" )
+metabias(m,k.min=4)
+dev.off()
+?forest.meta
+metabias(m,k.min=4)
+
+
+
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("T_sens.pdf",width = 7,height = 3)
+pic<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_T_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                   xlab = "Tumor invasion depth",
+                   label.left  = "LOX-",label.right = "LOX+",
+                   col.diamond = "#B4464B", col.diamond.lines = "black", 
+                   layout = "JAMA")
+dev.off()
+
+
+
+
+
+
+#M
+x<-paste0("M","Forest.pdf")          #换           
+y<-paste0("M","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =3) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "Tumor metastasis",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m,xlab = "Tumor metastasis")
+metabias(m,k.min=4)
+dev.off()
+
+
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("M_sens.pdf",width = 7,height = 3)
+pic<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_M_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                   xlab = "Tumor metastasis",
+                   label.left  = "LOX-",label.right = "LOX+",
+                   col.diamond = "#B4464B", col.diamond.lines = "black", 
+                   layout = "JAMA")
+dev.off()
+
+
+
+
+
+
+#Differentiation
+
+x<-paste0("D","Forest.pdf")          #换           
+y<-paste0("D","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =6) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = F ,fixed=TRUE,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = F,fixed   =  T, col.square = "#4682B4",
+            xlab = "Differentiation",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m,xlab = "Differentiation")
+metabias(m,k.min=4)
+dev.off()
+
+
+
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("D_sens.pdf",width = 7,height = 3)
+pic_D_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F, col.square = "#4682B4",
+                   xlab = "Differentiation",
+                   label.left  = "LOX-",label.right = "LOX+",
+                   col.diamond = "#B4464B", col.diamond.lines = "black", 
+                   layout = "JAMA")
+pic_D_sens<-forest(metainf(m,pooled = "random"),comb.random=T)
+dev.off()
+
+
+
+
+#Gender
+x<-paste0("Gender","Forest.pdf")          #换           
+y<-paste0("Gender","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =5) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "Gender",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m,xlab = "Gender")
+metabias(m,k.min=4)
+dev.off()
+trimfill(m,fixed = T)   #减补法之后
+
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("G_sens.pdf",width = 7,height = 3)
+pic_D_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_G_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                   xlab = "Gender",
+                   label.left  = "LOX-",label.right = "LOX+",
+                   col.diamond = "#B4464B", col.diamond.lines = "black", 
+                   layout = "JAMA")
+dev.off()
+
+
+
+
+
+
+#Lauren parting
+
+x<-paste0("Lauren classification","Forest.pdf")          #换           
+y<-paste0("Lauren classification","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =4) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = F ,fixed=TRUE,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = F,fixed   =  T, col.square = "#4682B4",
+            xlab = "Lauren classification",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m ,xlab = "Lauren classification")
+metabias(m,k.min=4)
+dev.off()
+trimfill(m,fixed = T)
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("L_sens.pdf",width = 7,height = 3)
+pic_L_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F, col.square = "#4682B4",
+                   xlab = "Lauren classification",
+                   label.left  = "LOX-",label.right = "LOX+",
+                   col.diamond = "#B4464B", col.diamond.lines = "black", 
+                   layout = "JAMA")
+pic_G_sens<-forest(metainf(m,pooled = "random"),comb.random=T)
+dev.off()
+
+
+
+
+
+
+
+
+#1-year OS
+x<-paste0("1-year OS","Forest.pdf")          #换           
+y<-paste0("1-year OS","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =7) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "1-year OS",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m ,xlab = "1-year OS")
+metabias(m1,k.min=4)
+dev.off()
+m1<-trimfill(m, random  = TRUE)
+
+
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("1OS_sens.pdf",width = 7,height = 3)
+pic_L_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_1OS_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                     xlab = "1-year OS",
+                     label.left  = "LOX-",label.right = "LOX+",
+                     col.diamond = "#B4464B", col.diamond.lines = "black", 
+                     layout = "JAMA")
+dev.off()
+
+
+
+
+
+
+#3-year OS
+
+x<-paste0("3-year OS","Forest.pdf")          #换           
+y<-paste0("3-year OS","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =8) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "3-year OS",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m,xlab = "3-year OS")
+metabias(m,k.min=4)
+dev.off()
+
+
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("3OS_sens.pdf",width = 7,height = 3)
+pic_L_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_3OS_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                     xlab = "3-year OS",
+                     label.left  = "LOX-",label.right = "LOX+",
+                     col.diamond = "#B4464B", col.diamond.lines = "black", 
+                     layout = "JAMA")
+dev.off()
+
+
+
+
+#5-year OS
+
+x<-paste0("5-year OS","Forest.pdf")          #换           
+y<-paste0("5-year OS","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =9) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",random = T ,fixed=F,studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "5-year OS",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m, xlab = "5-year OS")
+metabias(m,k.min=4)
+dev.off()
+
+#敏感性分析
+metainf(m,pooled = "random")
+metainf(m,pooled = "fixed")
+
+pdf("5OS_sens.pdf",width = 7,height = 3)
+pic_L_sens<-forest(metainf(m,pooled = "fixed"),comb.random=F)
+pic_5OS_sens<-forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                     xlab = "5-year OS",
+                     label.left  = "LOX-",label.right = "LOX+",
+                     col.diamond = "#B4464B", col.diamond.lines = "black", 
+                     layout = "JAMA")
+dev.off()
+
+install.packages("cowplot")
+library(cowplot)
+library(tidyverse)
+library(ggpubr)
+par()
+forest(metainf(m,pooled = "random"),comb.random=T, col.square = "#4682B4",
+       xlab = "5-year OS",
+       label.left  = "LOX-",label.right = "LOX+",
+       col.diamond = "#B4464B", col.diamond.lines = "black", 
+       layout = "JAMA")
+
+
+
+
+
+
+
+
+#age
+
+
+x<-paste0("age","Forest.pdf")          #换           
+y<-paste0("age","funnel.pdf")          #换   
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =10) #换   
+
+metabin(a,b,c,d,data = metadat,sm="OR", random = T ,fixed=TRUE)
+m<-metabin(a,b,c,d,data = metadat,sm="OR",studlab = paste(Author,Year))    
+#上面可以加comb.fixed 及comb.random 为效应模型的选择(“固定"，"随机")
+pdf(x,width = 7,height = 3)
+forest.meta(m,random = T,fixed   =  F, col.square = "#4682B4",
+            xlab = "age",
+            label.left  = "LOX-",label.right = "LOX+",
+            col.diamond = "#B4464B", col.diamond.lines = "black", 
+            layout = "JAMA")
+dev.off()
+pdf(y)
+funnel(m, xlab = "5-year OS")
+metabias(m,k.min=4)
+dev.off()
+
+
+library(rJava)
+library(xlsxjars)
+library(xlsx)
+
+for ( j in 1:9) {
+  
+metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =j) 
+for (i in 1:nrow(metadat)) {
+  
+metadat$Conbine[i]<-paste0(metadat[i,1],metadat[i,4],"/",metadat[i,6])
+}
+
+write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, row.names=FALSE) 
+
+}
+
+
