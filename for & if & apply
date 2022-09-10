@@ -98,3 +98,10 @@ write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, r
 
 
 
+
+###### apply函数运用 #######
+apply(a,1,function(x){ })     ##a是矩阵，1是行，2是列， x是每一行/列
+
+
+
+
