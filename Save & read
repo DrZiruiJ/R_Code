@@ -2,3 +2,23 @@
 
 
 save(a,dat,test1,fill="./test.Rdata")  #将三个保存到Rdata
+
+write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, row.names=FALSE) #####as.character()保证输出的是带引号的字符串很重要######
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
