@@ -428,11 +428,34 @@ lguci <- log(info$uci)
 info$selghr <- (lguci-lglci)/(2*1.96)
 library(meta)
 pfs <- metagen(TE = lghr,seTE = selghr,studlab = paste(info$Author,info$Year),data = info,sm = 'HR')
+
+
+
+pdf("OS.pdf",width = 7,height = 3)
 forest(pfs,random = T,fixed   =  F, col.square = "#4682B4",
        xlab = "OS",
        label.left  = "LOX-",label.right = "LOX+",
        col.diamond = "#B4464B", col.diamond.lines = "black", 
        layout = "JAMA")
+dev.off()
+
+
+
+#敏感性分析
+pdf("OS_sen.pdf",width = 7,height = 3)
+forest(metainf(pfs,pooled = "random"),comb.random=T, col.square = "#4682B4",
+                     xlab = "OS",
+                     label.left  = "LOX-",label.right = "LOX+",
+                     col.diamond = "#B4464B", col.diamond.lines = "black", 
+                     layout = "JAMA")
+dev.off()
+#漏斗图
+pdf("OS_funnel.pdf")
+funnel(pfs, xlab = "OS")
+dev.off()
+
+#偏移检验
+metabias(pfs,k.min=4,method="linreg")#k.min是最小文献纳入,method="linreg"是默认的Egger检验，目前主流推荐；Begg检验用“rank”
 
 
 
