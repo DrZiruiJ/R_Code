@@ -417,3 +417,24 @@ write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, r
 }
 
 
+
+##########合并HR，需要HR，95%置信区间上下，三个数据############
+test1 <- read.xlsx("./HR.xlsx", sheetIndex =1) 
+test1<-test1[1:5,2:6]
+info<-test1
+info$lghr <- log(info$hr)
+lglci <- log(info$lci)
+lguci <- log(info$uci)
+info$selghr <- (lguci-lglci)/(2*1.96)
+library(meta)
+pfs <- metagen(TE = lghr,seTE = selghr,studlab = paste(info$Author,info$Year),data = info,sm = 'HR')
+forest(pfs,random = T,fixed   =  F, col.square = "#4682B4",
+       xlab = "OS",
+       label.left  = "LOX-",label.right = "LOX+",
+       col.diamond = "#B4464B", col.diamond.lines = "black", 
+       layout = "JAMA")
+
+
+
+
+
