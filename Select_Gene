@@ -196,7 +196,8 @@ if(j==nrow(guardian1)) { break }
 output1<-Output[!Output$gene==0,]
 write.csv(output1,"Bioinfor_gene_valueable.csv",row.names = F)
 
-
+output2<-output1[output1$gastric_cancer==0 & output1$pan_cancer<7,]
+write.csv(output2,"Bioinfor_gene_final.csv",row.names = F)
 
 
 
