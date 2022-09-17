@@ -1,0 +1,200 @@
+
+
+
+library(limma)
+library(ggplot2)
+library(ggpubr)
+library(survival)    
+library(RISmed)
+
+
+
+
+
+
+
+
+
+expFile="symbol.txt"     #配置文件，基因表达文件
+
+
+rt=read.table(expFile, header=T, sep="\t", check.names=F)
+rt=as.matrix(rt)
+rownames(rt)=rt[,1]
+exp=rt[,2:ncol(rt)]
+dimnames=list(rownames(exp),colnames(exp))
+data=matrix(as.numeric(as.matrix(exp)), nrow=nrow(exp), dimnames=dimnames)
+data=avereps(data)
+guardian1<-data                                   #设定guardian，防火墙
+data=guardian1
+
+
+Output=data.frame(                                #做好输出目录文件
+  gene = c(rep(-1,nrow(guardian1))),
+  muticox = c(rep(-1,nrow(guardian1))),
+  pan_cancer =c(rep(-1,nrow(guardian1))),
+  gastric_cancer=c(rep(-1,nrow(guardian1))),
+  expression_sig= c(rep(-1,nrow(guardian1)))
+)
+
+
+####正式开始######
+
+
+#测试下数据#
+gene="VCAN"   
+nrow(guardian1)
+start1=1
+#测试下数据#
+
+
+
+
+
+repeat{                                           #重复，最后有终止条件#
+try(                                              #强制执行函数，报错后依旧执行#
+  
+for (j in start1:nrow(guardian1)) {
+ gene=rownames(guardian1)[j]
+  
+  
+
+
+data=guardian1   
+data=t(data[gene,,drop=F])
+group=sapply(strsplit(rownames(data),"\\-"), "[", 4)
+group=sapply(strsplit(group,""), "[", 1)
+group=gsub("2", "1", group)
+conNum=length(group[group==1])       #????????Ʒ??Ŀ
+treatNum=length(group[group==0])     #????????Ʒ??Ŀ
+Type=c(rep(1,conNum), rep(2,treatNum))
+
+#??Ʒ????
+exp=cbind(data, Type)
+exp=as.data.frame(exp)
+colnames(exp)=c("gene", "Type")
+exp$Type=ifelse(exp$Type==1, "Normal", "Tumor")
+exp$gene=log2(exp$gene+1)
+
+
+#设置比较组
+group=levels(factor(exp$Type))
+exp$Type=factor(exp$Type, levels=group)
+test_5=wilcox.test(gene~Type,exp)####输出两组检验结果
+
+
+
+outTab=exp
+colnames(outTab)=c(gene, "Type")
+rt=outTab
+
+cliFile="time.txt"        #临床数据文件
+gene=colnames(rt)[1]
+
+
+#删掉正常样品
+tumorData=rt[rt$Type=="Tumor",1,drop=F]
+tumorData=as.matrix(tumorData)
+rownames(tumorData)=gsub("(.*?)\\-(.*?)\\-(.*?)\\-(.*?)\\-.*", "\\1\\-\\2\\-\\3", rownames(tumorData))
+data=avereps(tumorData)
+#根据目标基因表达量对样品进行分组
+Type=ifelse(data[,gene]>median(data[,gene]), "High", "Low")
+data=cbind(as.data.frame(data), Type)
+#读取生存数据文件
+cli=read.table(cliFile, header=T, sep="\t", check.names=F, row.names=1)
+cli$futime=cli$futime/365
+#数据合并并输出结果
+sameSample=intersect(row.names(data),#读取生存数据文件
+                    row.names(cli))
+data=data[sameSample,,drop=F]
+cli=cli[sameSample,,drop=F]
+rt=cbind(cli, data)
+cliFile="clinical.txt"
+
+  exp=rt[,-ncol(rt)]    #读取表达文件
+  cli=read.table(cliFile, header=T, sep="\t", check.names=F, row.names=1)      #读取临床文件
+  
+  #数据合并
+  sameSample=intersect(row.names(cli),row.names(exp))
+  exp=exp[sameSample,]
+  cli=cli[sameSample,]
+  rt=cbind(exp, cli)
+  
+  #单因素独立预后分析
+  uniTab=data.frame()
+  for(i in colnames(rt[,3:ncol(rt)])){
+    cox <- coxph(Surv(futime, fustat) ~ rt[,i], data = rt)
+    coxSummary = summary(cox)
+    uniTab=rbind(uniTab,
+                 cbind(id=i,
+                       HR=coxSummary$conf.int[,"exp(coef)"],
+                       HR.95L=coxSummary$conf.int[,"lower .95"],
+                       HR.95H=coxSummary$conf.int[,"upper .95"],
+                       pvalue=coxSummary$coefficients[,"Pr(>|z|)"])
+    )
+  }
+
+  
+  #多因素独立预后分析
+  uniTab=uniTab[as.numeric(uniTab[,"pvalue"])<1,]
+  if(is.na(uniTab$pvalue[1])){
+    Output$gene[j]<-0
+    Output$muticox[j]<-0
+    Output$expression_sig[j]<-0
+    Output$gastric_cancer[j]<-0
+    Output$pan_cancer[j]<-0
+    next}
+  rt1=rt[,c("futime", "fustat", as.vector(uniTab[,"id"]))]
+  multiCox=coxph(Surv(futime, fustat) ~ ., data = rt1)
+  multiCoxSum=summary(multiCox)
+  test_2=multiCoxSum$coefficients[,"Pr(>|z|)"]
+ 
+  
+  
+if (as.numeric(test_2[1])<0.05) {
+  
+Output$gene[j]<-gene
+Output$muticox[j]<-as.numeric(test_2[1])
+Output$expression_sig[j]<-test_5$p.value
+
+
+key1=c("((Stomach Cancer[Title/Abstract]) OR (gastric cancer[Title/Abstract])) AND (")
+key2=c("[Title])")
+
+key_1=paste0(key1,gene,key2)
+
+data=EUtilsSummary(key_1,db="pubmed",retmax=1000,
+                   mindate=1970,maxdate=2022)
+Output$gastric_cancer[j]<-data@count
+
+key3=c("(cancer[Title/Abstract]) AND (")
+key4=c("[Title/Abstract])")
+key_2=paste0(key3,gene,key4)
+data=EUtilsSummary(key_2,db="pubmed",retmax=1000,
+                   mindate=1970,maxdate=2022)
+Output$pan_cancer[j]<-data@count
+}  
+else{
+  Output$gene[j]<-0
+  Output$muticox[j]<-0
+  Output$expression_sig[j]<-0
+  Output$gastric_cancer[j]<-0
+  Output$pan_cancer[j]<-0
+  
+}  
+start1 =nrow(guardian1)-sum(Output[,1]==-1 )
+
+  
+}
+  
+ , silent = TRUE)
+if(j==nrow(guardian1)) { break }
+
+}
+
+output1<-Output[!Output$gene==0,]
+write.csv(output1,"Bioinfor_gene_valueable.csv",row.names = F)
+
+
+
+
