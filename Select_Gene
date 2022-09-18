@@ -111,6 +111,13 @@ sameSample=intersect(row.names(data),#读取生存数据文件
 data=data[sameSample,,drop=F]
 cli=cli[sameSample,,drop=F]
 rt=cbind(cli, data)
+
+#比较高低表达组之间的生存差异，得到显著性的p值
+diff=survdiff(Surv(futime, fustat) ~ Type, data=rt)
+pValue=1-pchisq(diff$chisq, df=1)
+
+
+
 cliFile="clinical.txt"
 
   exp=rt[,-ncol(rt)]    #读取表达文件
@@ -158,7 +165,7 @@ if (as.numeric(test_2[1])<0.05) {
 Output$gene[j]<-gene
 Output$muticox[j]<-as.numeric(test_2[1])
 Output$expression_sig[j]<-test_5$p.value
-
+Output$P_val[j]<-pValue
 
 key1=c("((Stomach Cancer[Title/Abstract]) OR (gastric cancer[Title/Abstract])) AND (")
 key2=c("[Title])")
