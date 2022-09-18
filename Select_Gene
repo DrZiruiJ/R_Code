@@ -13,7 +13,7 @@ library(RISmed)
 #########################  生信基因选择   #############################
 ######################################################################
 
-
+#########注意：代码需要三个配置文件分别为：expFile="symbol.txt"; cliFile="time.txt"; cliFile="clinical.txt" #########
 
 
 
@@ -27,7 +27,7 @@ exp=rt[,2:ncol(rt)]
 dimnames=list(rownames(exp),colnames(exp))
 data=matrix(as.numeric(as.matrix(exp)), nrow=nrow(exp), dimnames=dimnames)
 data=avereps(data)
-guardian1<-data                                   #设定guardian，防火墙
+guardian1<-data                                   #设定guardian1，防火墙
 data=guardian1
 
 
@@ -112,7 +112,7 @@ data=data[sameSample,,drop=F]
 cli=cli[sameSample,,drop=F]
 rt=cbind(cli, data)
 
-#比较高低表达组之间的生存差异，得到显著性的p值
+#比较高低表达组之间的生存差异，得到显著性的p值(pValue)
 diff=survdiff(Surv(futime, fustat) ~ Type, data=rt)
 pValue=1-pchisq(diff$chisq, df=1)
 
