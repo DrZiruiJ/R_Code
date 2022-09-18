@@ -67,11 +67,11 @@ data=t(data[gene,,drop=F])
 group=sapply(strsplit(rownames(data),"\\-"), "[", 4)
 group=sapply(strsplit(group,""), "[", 1)
 group=gsub("2", "1", group)
-conNum=length(group[group==1])       #????????Ʒ??Ŀ
-treatNum=length(group[group==0])     #????????Ʒ??Ŀ
+conNum=length(group[group==1])       
+treatNum=length(group[group==0])    
 Type=c(rep(1,conNum), rep(2,treatNum))
 
-#??Ʒ????
+
 exp=cbind(data, Type)
 exp=as.data.frame(exp)
 colnames(exp)=c("gene", "Type")
