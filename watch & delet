@@ -3,3 +3,5 @@
 
 str(guardian3)   #简要查看数据
 
+######用R去除全是0的行#######
+X[which(rowSums(X) > 0),]
