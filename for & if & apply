@@ -103,5 +103,5 @@ write.xlsx(metadat, file="file1.xlsx", sheetName=as.character(j), append=TRUE, r
 apply(a,1,function(x){ })     ##a是矩阵，1是行，2是列， x是每一行/列
 
 
-
-
+######用R去除全是0的行#######
+X[which(rowSums(X) > 0),]
