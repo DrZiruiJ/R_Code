@@ -4,7 +4,7 @@
 
 
 1. 
-save(a,dat,test1,fill="./test.Rdata")  #将三个保存到Rdata
+save(a,dat,test1,fill="./test.Rdata")  #将三个保存到.Rdata，或者.Rds
 
 
 2. 
@@ -42,8 +42,9 @@ merge=read.table("./symbol.txt",sep="\t",header=T)
 exprSet <- read.table("1_input.txt", comment.char="!", stringsAsFactors=F, header=T)        ### comment.char="!" 意思是！开头的行作为注释
 
 
-
-
+5.快速友好读取
+library(data.table)
+anno=fread("GPL96-57554.txt",header=T,data.table=F)   #是否变成data.table格式
 
 
 
