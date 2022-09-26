@@ -105,3 +105,11 @@ apply(a,1,function(x){ })     ##a是矩阵，1是行，2是列， x是每一行/
 
 ######用R去除全是0的行#######
 X[which(rowSums(X) > 0),]
+
+
+
+
+  
+######merge合并函数#######
+d3=merge(x=d1,y=d2,by.x="x2",by.y="y2")   #按x的列合并
+
