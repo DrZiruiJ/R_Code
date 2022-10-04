@@ -30,7 +30,7 @@ load(file = "./test.Rdata")
 
 2.
 library(xlsx) 
-metadat <- read.xlsx("./meta_R.xlsx", sheetIndex =2)   #读取xlsx表格
+metadat <- read.xlsx("./meta_R.xlsx",header = F, sheetIndex =2)   #读取xlsx表格
 
 
 3.
