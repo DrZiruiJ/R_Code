@@ -1,0 +1,5 @@
+
+
+
+###ggplot2 画图 X 轴排序问题###
+ cliExpData$sameClinical <- factor(cliExpData$sameClinical,levels = c("Stage I", "Stage II", "Stage III", "Stage IV"))
