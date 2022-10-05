@@ -51,8 +51,16 @@ anno=fread("GPL96-57554.txt",header=T,data.table=F)   #是否变成data.table格
 
 
 
+######################################################################
+###################            watch              ####################
+######################################################################
 
 
+install.packages("DT")
+library(DT)
+datatable(iris)  #调用DT中的datatable函数显示数据
+
+datatable(iris,rownames = FALSE)
 
 
 
