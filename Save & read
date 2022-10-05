@@ -44,9 +44,9 @@ exprSet <- read.table("1_input.txt", comment.char="!", stringsAsFactors=F, heade
 
 5.快速友好读取
 library(data.table)
-anno=fread("GPL96-57554.txt",header=T,data.table=F)   #是否变成data.table格式
+anno=fread("GPL96-57554.txt",header=T,sep="\t",data.table=F)   #是否变成data.table格式
 
-
+rt=fread(expFile, header=T, sep="\t", check.names=F)
 
 
 
