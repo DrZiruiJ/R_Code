@@ -1,0 +1,9 @@
+
+
+data1<-data.frame()
+data1[1:500,1]<--1
+data1$actin<-c(runif(500,17,19))
+data1$control<-c(runif(500,13,15))
+data1$Ischemia<-c(runif(500,11.5,13))
+data1$"I/R"<-c(runif(500,11.5,12.5))
+write.csv(data1,"Data.csv")
