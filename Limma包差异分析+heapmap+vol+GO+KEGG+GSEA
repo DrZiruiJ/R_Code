@@ -119,6 +119,18 @@ rm(list = ls())#清除
 ## 0. 加载表达数据
 load(file = "2_exprSet_rmdup.Rdata")
 
+
+####################在TCGA数据库中创建分组########################
+group=sapply(strsplit(colnames(exprSet),"\\-"), "[", 4)
+group=sapply(strsplit(group,""), "[", 1)
+group=gsub("2", "1", group)
+sum(group==1)
+sum(group==0)
+####################在TCGA数据库中创建分组########################
+
+
+
+
 ## 1.创建分组
 group <- c(rep("con",18),rep("treat",18))##第555555555555处需要改的地方，意思是在矩阵里面前面18个对照组，后面18个实验组
 group <- factor(group,levels = c("con","treat"))
