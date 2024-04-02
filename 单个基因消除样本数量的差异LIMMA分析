@@ -1,0 +1,18 @@
+# 假设我们有一个表达矩阵 'exp' 和一个分组信息 'group'
+# 其中 'group' 中的 1 代表组1, 2 代表组2, 样本量不平衡
+
+# 提取单个基因的表达数据
+gene_expr = exp["GENE123",]
+
+# 构建设计矩阵
+design = model.matrix(~0+group)
+colnames(design) = levels(exp$Type)  #分开两组
+
+# 拟合线性模型
+fit = lmFit(exp$gene, design)
+
+# 计算差异结果
+contrast.matrix = makeContrasts(Tumor-Normal, levels=design)
+fit2 = contrasts.fit(fit, contrast.matrix)
+ebFit = eBayes(fit2)
+gene_diff = topTable(ebFit, coef=1, adjust.method="BH", p.value=0.05)
