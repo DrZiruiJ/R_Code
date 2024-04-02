@@ -1,0 +1,14 @@
+########################箱线图##############################
+
+boxplot=ggboxplot(exp, x="Type", y="GLUD2", color="Type",
+		          xlab="",
+		          ylab=paste0(gene, " gene expression"),
+		          legend.title="",
+		          palette = c("#2878B5" ,"#C82423"),        add = "jitter")+ 
+	stat_compare_means(comparisons=list(c("Normal","Tumor"))     ######此处标注两组比较的输入格式，为list格式，三组比较时间再加c()即可#####
+	              #     ,symnum.args=list(cutpoints = c(0, 0.001, 0.01, 0.05, 1)
+	              #                       , symbols = c("***", "**", "*", "ns"))
+	              #     ,label = "p.signif"
+	              ,method = "wilcox.test"
+	              
+	              )
